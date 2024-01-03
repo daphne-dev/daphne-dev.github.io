@@ -65,6 +65,7 @@ module.exports = () => {
     eslint: {
       dirs: ['app', 'components', 'layouts', 'scripts'],
     },
+    basePath: '/daphne-blog-v2',
     images: {
       remotePatterns: [
         {
