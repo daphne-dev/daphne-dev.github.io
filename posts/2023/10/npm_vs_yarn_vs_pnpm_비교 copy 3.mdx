@@ -1,0 +1,77 @@
+---
+title: 'NPM, YARN, PNPM 비교'
+tags: ['npm', 'yarn', 'pnpm']
+date: 2023-10-10 21:09:11
+summary: '어느 패키지 매니저를 써야할까?'
+---
+
+## Node.js에서의 패키지 관리자
+
+> `Node.js`에서의 패키지 관리자란 기본적으로 Node.js 모듈의 설치 및 관리를 해주는 역할을 해주는 도구를 말한다.
+
+그 외에 다음과 같은 일들을 해준다.
+
+- package.json에 작성된 스크립트 실행
+- metadata 작성 및 관리
+  - 여기서 metadata란 패키지를 작성한 사람, 저장소 위치, 게시된 버전 등을 뜻한다.
+- dependencies 관리
+- package publishing
+- 보안 검사
+
+당연히도 3개 패키지 관리자 모두 위의 기능 대부분을 잘 수행한다. 그렇다면 성능에 따라 선택을 해야되는 상황이 되었다. 디스크 효율성, 패키지 설치 속도 등을 따져 더 성능이 좋은 패키지 관리자를 선택할 수 있게 된 것이다.
+
+## npm vs yarn vs pnpm 비교
+
+### npm
+
+npm은 node 진영에서 나온 최초의 패키지 관리자다. 전통적이며 지금도 꾸준히 사용되고 있는 패키지 관리자다. yarn이나 pnpm과 비교했을 때 패키지 설치 속도가 느리다.
+
+npm이 잘못된 패키지를 처리하는 방식으로 인해 프로젝트에 직접적으로 영향을 미치는 몇 가지 보안 취약점이 발견된 적이 있다.
+
+### yarn
+
+yarn은 Facebook에서 개발한 패키지 관리자로 빠르고 안정적이며 안전하다.
+
+Plug’n’Play(PnP)라는 설치 전략을 도입하여 디스크 효율을 높이고 설치가 더 안정적일 수 있게 했다.
+
+PnP 전략의 핵심은 .pnp.cjs라는 단일 파일을 만드는 것인데 여기에는 다양한 패키지에 대한 맵이 포함되어 있는 파일이다. 이를 통해 효율적인 처리가 되도록 했다.
+
+### pnpm
+
+가장 나중에 나온 패키지 관리자인 pnpm은 패키지 설치 프로세스를 단순화하기 위해 npm 위에 구축된 새로운 패키지 관리자다.
+
+공식 홈페이지에서 이와 같은 영상이 올라와 있는데 이는 pnpm의 자신감을 보여준다.
+
+![](/static/images/npm_vs_yarn_vs_pnpm-001.png)
+
+[pnpm 공식 유튜브 링크](https://www.youtube.com/watch?v=d1E31WPR70g&ab_channel=CoderOne)
+
+pnpm은 npm과 yarn이랑은 달리 여러 프로젝트들의 중복되는 종속성들이 문제라고 보았는데 이를 해결하고자 symlinks를 사용했다.
+
+패키지가 설치되면 해당 파일이 단일 위치에서 하드 링크가 된다. 이를 symlinks로 연결해서 사용하는 방식이라 디스크 공간도 절약하고 설치 속도의 향상도 이루어냈다.
+
+![non-flat node_modules](/static/images/npm_vs_yarn_vs_pnpm-002.png)
+
+또한 패키지들을 설치할 때 병렬적으로 처리하여 속도가 빠르다.
+
+![](/static/images/npm_vs_yarn_vs_pnpm-003.png)
+
+## 성능 및 디스크 효율성
+
+[npm vs yarn vs pnpm 벤치마크](https://p.datadoghq.eu/sb/d2wdprp9uki7gfks-c562c42f4dfd0ade4885690fa719c818?tpl_var_npm%5B0%5D=%2A&tpl_var_pnpm%5B0%5D=%2A&tpl_var_yarn-classic%5B0%5D=%2A&tpl_var_yarn-modern%5B0%5D=%2A&tpl_var_yarn-nm%5B0%5D=%2A&tpl_var_yarn-pnpm%5B0%5D=no&from_ts=1657214169347&to_ts=1664990169347&live=true)
+
+[npm vs yarn vs pnpm 벤치마크 2](https://pnpm.io/benchmarks)
+
+npm의 경우 yarn과 pnpm에 비해 속도 면에서 성능이 많이 떨어지고 있는 것을 확인할 수 있고, yarn PnP와 pnpm이 서로 경쟁하고 있는 모습을 볼 수 있다.
+
+## 결론
+
+기능적으로는 3개의 패키지 매니저 모두 문제 없이 동등한 모습을 보인다. 물론 내부 동작은 서로 다르지만 말이다.
+
+npm은 전통적이고 많이 쓰이고 있지만 yarn과 pnpm에 비해 성능면에서 확실히 뒤떨어져 있다. 또한 최근에 발생했던 보안 이슈들도 있어 굳이 npm을 사용하는 것에 대한 이점이 없다고 보인다. 하지만 그럼에도 불구하고 빠르고 쉽게 접근하기에는 npm 만한게 없다고 할 수 있다. node의 세계를 처음 접하는 사람이라면 npm은 참고할 문서나 글들이 많기에 시행착오를 많이 줄일 수 있을 것이다.
+
+yarn은 PnP 버전으로 사용했을 때 확실히 빠르고 안정적이며 디스크 효율성도 좋아졌다.
+
+pnpm도 yarn과 마찬가지로 빠르고 안정적이다. 중복되는 종속성을 해결하고자 symlinks 방식을 채택해 디스크 공간도 절약했고 패카지 설치 속도의 향상도 이루어냈다.
+
+3개의 패키지 매니저 중 어떤 것을 사용할 지는 사용자에 따라 달렸다고 생각한다. 기능적으로는 3개의 패키지 매니저 모두 크게 차이가 없기 때문이다.

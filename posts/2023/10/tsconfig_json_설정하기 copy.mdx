@@ -1,0 +1,404 @@
+---
+title: 'tsconfig.json 설정하기'
+tags: ['TypeScript']
+date: 2023-10-09 15:23:43
+summary: 'tsconfig.json 알고쓰자'
+---
+
+> Typescript 설정 파일(tsconfig.json)은 Typescript를 Javascript로 변환할 때의 설정을 정의해놓는 파일이다. 해당 파일을 기준으로 컴파일을 진행한다. 여기서 주로 다룰 곳은 compilerOptions 부분이다. 이곳에서 Typescript를 보다 엄격하게 사용하기 위한 설정을 할 수 있다.
+
+각 옵션들을 살펴보자.
+
+## CompilerOptions
+
+Type Checking 부분이다.
+
+### allowUnreachableCode
+
+- undefined(기본 값) : 경고로 접근할 수 없는 코드가 있다고 제안 제공
+  ![](/static/images/tsconfig-001.png)
+- true : 접근할 수 없는 코드에 대해 무시(알려주지 않음, 정상 컴파일)
+  ![](/static/images/tsconfig-002.png)
+- false : 접근할 수 없는 코드에 대해 컴파일러 오류 발생
+  ![](/static/images/tsconfig-003.png)
+
+### allowUnusedLabels
+
+- undefined(기본 값) : 사용되지 않는 레이블이라고 제안 제공
+  ![](/static/images/tsconfig-004.png)
+- true : 사용되지 않는 레이블에 대해 무시
+  ![](/static/images/tsconfig-005.png)
+- false : 사용되지 않는 레이블에 대해 컴파일 오류 발생
+  ![](/static/images/tsconfig-006.png)
+
+### alwaysStrict
+
+Typescript 파일이 ECMAScript 엄격 모드에서 구문 분석이 되며 각 소스 파일에 대해 `use strict` 를 내보내는지 확인한다.
+
+런타임에서 무시하던 에러들을 발생시키며 가끔씩 어떤 코드들에 대해서는 엄격 모드의 코드는 비-엄격 모드의 코드보다 더 빨리 작동하도록 만들어지게 하기도 한다.
+
+해당 옵션은 되도록이면 true로 설정하는 것이 좋다.
+
+### exactOptionalPropertyTypes
+
+Typescript에서는 옵션 속성 설정이라는 것이 있다. `exactOptionalPropertyTypes`를 활성화하지 않으면 `undefined`도 설정이 가능하지만 가 활성화되면 옵션 속성 설정으로 `undefined`를 할당할 수 없게 한다.
+
+해당 옵션을 사용하려면 `strictNullChecks` 옵션을 `true`로 선행 설정해야한다.
+
+```tsx
+interface Color {
+  color?: 'red' | 'blue'
+}
+
+const color: Color = undefined
+```
+
+![](/static/images/tsconfig-007.png)
+
+### noFallthroughCasesInSwitch
+
+![](/static/images/tsconfig-008.png)
+
+- true : switch 문의 `fall through` 케이스에 대한 오류를 안내한다.
+- false(기본 값) : switch 문의 `fall through` 케이스에 대한 오류를 무시한다.
+
+### noImplicitAny
+
+```tsx
+function fn(n) {
+  console.log(n.length)
+}
+
+fn(2)
+```
+
+![](/static/images/tsconfig-009.png)
+
+- true : 타입 유형을 추론할 수 없는 `any 유형`에 대해 컴파일 오류를 발생시킨다.
+- false(기본 값) : 타입 유형을 추론할 수 없는 `any 유형`에 대해 안내 하지만 컴파일 시 무시한다.
+
+### noImplicitOverride
+
+클래스를 상속 했을때 하위 클래스에서 기본 클래스의 멤버를 재정의하는 경우 `override` 한정자를 포함하는 것에 대해 설정할 수 있다.
+
+```tsx
+class Coffee {
+  makeCoffee() {
+    //
+  }
+}
+
+class SomeCoffee extends Coffee {
+  makeCoffee() {
+    //
+  }
+}
+```
+
+![](/static/images/tsconfig-010.png)
+
+- true : `override 한정자`를 포함해야 한다고 안내
+- false(기본 값) : `override 한정자`를 포함하는 안내 무시
+
+### noImplicitReturns
+
+함수의 모든 코드 경로를 검사하여 값을 반환하는지 확인하는 옵션이다.
+
+```tsx
+function hello(s: string) {
+  if (s === 'hello') {
+    return true
+  } else {
+  }
+}
+```
+
+![](/static/images/tsconfig-011.png)
+
+- true : 일부 코드 경로가 값을 반환하지 않을 경우 안내
+- false(기본 값) : 일부 코드 경로가 값을 반환하지 않아도 안내하지 않음
+
+### noImplicitThis
+
+this 표현식에서 암시적으로 `any 유형`이 있는 경우가 있는지 확인하는 옵션이다.
+
+```tsx
+function hello(s: string) {
+  const a = 'aaa'
+  const b = 'bbb'
+
+  return function () {
+    return this.a + this.b
+  }
+}
+```
+
+![](/static/images/tsconfig-012.png)
+
+- true : 암시적으로 `any 유형` 이 포함되는 경우 안내
+- false(기본 값) : 암시적으로 `any 유형`이 포함되어도 무시
+
+### noPropertyAccessFromIndexSignature
+
+Typescript에서의 `인덱스 시그니처`를 간단히 설명하면 알 수 없는 어떤 객체에 대해 key 및 value 유형만 알고 있는 경우에 입력하는 것을 `인덱스 시그니처`라고 한다.
+
+```tsx
+interface SomeObject {
+  a: 'aaa'
+  b: 'bbb'
+
+  [key: string]: string
+}
+
+const someObject = getSomeObject()
+
+someObject.a
+someObject.b
+
+someObject.c
+
+function getSomeObject(): SomeObject {
+  return {
+    a: 'aaa',
+    b: 'bbb',
+    c: 'ccc',
+  }
+}
+```
+
+![](/static/images/tsconfig-013.png)
+
+- true : 인덱스 시그니처로 정의된 객체에서 obj.key 구문을 사용하여 정의되지 않은 필드에 액세스 할 수 없고 반드시 `obj['key']` 구문을 사용하도록 한다.
+- false(기본 값) : 인덱스 시그니처로 정의된 객체에서 obj.key 구문을 사용하여 정의되지 않은 필드에 액세스가 가능하다.
+
+### noUncheckedIndexedAccess
+
+Typescript에서는 인덱스 시그니처를 통해 확실한 key나 value는 알 수 없지만 이런 유형의 key와 value가 올 것이라고 설정할 수 있다. 이는 객체에 정의되지 않은 key에 대해서도 타입 추론을 할 수 있게 해주는데 `noUncheckedIndexedAccess` 옵션을 활성화하면 이러한 정의되지 않은 key에 대해 인덱스 시그니처로 된 타입과 더불어 `undefined`를 추가해준다.
+
+```tsx
+interface SomeObject {
+  a: string
+  b: string
+
+  [key: string]: string
+}
+
+declare const obj: SomeObject
+
+const a = obj.a
+const b = obj.b
+const c = obj.c
+```
+
+![](/static/images/tsconfig-014.png)
+
+- true(기본 값) : 인덱스 시그니처로 타입은 정의되었지만 객체에 정의되지 않은 key에 대해 `undefined` 타입을 추가한다.
+- false : 인덱스 시그니처로 타입은 정의되었지만 객체에 정의되지 않은 key에 대해서 `undefined` 타입을 추가하지 않는다.
+
+### noUnusedLocals
+
+```tsx
+function hello(s: string) {
+  const a = 'aaa'
+
+  if (s === 'hello') {
+    return true
+  } else {
+  }
+}
+```
+
+![](/static/images/tsconfig-015.png)
+
+- true : 컴파일 시 사용하지 않는 지역 변수에 대해 오류를 안내한다.
+- false : 컴파일 시 사용하지 않는 지역 변수에 대해 오류를 무시한다.
+
+### noUnusedParameters
+
+```tsx
+function hello(s: string) {
+  return 'Hello'
+}
+```
+
+![](/static/images/tsconfig-016.png)
+
+- true : 컴파일 시 사용하지 않는 매개 변수에 대해 오류를 안내한다.
+- false : 컴파일 시 사용하지 않는 매개 변수에 대해 오류를 무시한다.
+
+### strict
+
+이 옵션을 활성화하면 프로그램의 정확성을 좀 더 강력하게 보장하는 광범위한 타입 검사를 하게 한다. 이 옵션 하나를 활성화하는 것으로 아래의 옵션을 모두 활성화한 것과 같은 효과를 볼 수 있다.
+
+- alwaysStrict
+- strictNullChecks
+- strictBindCallApply
+- strictFunctionTypes
+- strictPropertyInitialization
+- useUnknownInCatchVariables
+
+Typescript의 버전이 업데이트 되면서 이 옵션에 다른 엄격한 검사가 향후 포함될 수 있으므로 Typescript 버전을 업그레이드하면 프로그램에서 새로운 오류가 발생할 수도 있다. 때에 따라 해당 옵션을 비활성화하거나 필요한 옵션들을 직접 추가하도록 하자.
+
+### strictBindCallApply
+
+활성화 시 내장 함수 `call, bind, apply`에 대해 올바른 인수로 호출되는지 확인한다.
+
+```tsx
+function hello(s: string) {
+  return s
+}
+
+const hello1 = hello.call(undefined, 'aaa')
+const hello2 = hello.call(undefined, false)
+```
+
+![](/static/images/tsconfig-017.png)
+
+- true
+- false(기본 값)
+
+### strictFunctionTypes
+
+활성화 시 함수 매개변수에 대해 보다 더 정확하게 검사가 되도록 한다.
+
+```tsx
+function hello(s: string) {
+  return s
+}
+
+const hello1: HelloFunc = hello
+
+type HelloFunc = (s: string | number) => string
+
+hello1(10)
+```
+
+![](/static/images/tsconfig-018.png)
+
+- true
+- false(기본 값)
+
+### strictNullChecks
+
+활성화 시 구체적인 값이 예상되는 곳에서 해당 값을 사용하려고 하면 타입 오류가 발생한다.
+
+```tsx
+const obj = {
+  a: 'aaa',
+  b: 'bbb',
+}
+
+function hello(s: string) {
+  let c
+
+  // 매개변수 s에 'sss'가 담겨올 것이라고 보장할 수 없다.
+  if (s === 'sss') {
+    c = obj
+  } else {
+    //
+  }
+
+  // 매개변수 s에 'sss'가 담겨오지 않을 경우 이 코드는 예기치 않은 오류를 발생시킬 수 있다.
+  console.log(c.a)
+  return s
+}
+```
+
+![](/static/images/tsconfig-019.png)
+
+- true
+- false(기본 값)
+
+### strictPropertyInitialization
+
+활성화 시 클래스 속성이 선언되었지만 생성자에서 설정되지 않은 경우 오류를 발생시킨다.
+
+```tsx
+class Coffee {
+  name: string
+  price: number
+
+  constructor(name: string) {
+    this.name = name
+  }
+}
+```
+
+![](/static/images/tsconfig-020.png)
+
+- true
+- false(기본 값)
+
+### useUnknownInCatchVariables
+
+활성화 시 `catch절`의 매개변수 타입을 `any`에서 `unknown`으로 변경한다.
+
+- true
+  ![](/static/images/tsconfig-021.png)
+- false(기본 값)
+  ![](/static/images/tsconfig-022.png)
+
+여기까지 컴파일 시 `Type checking`에 대한 설정들이었다. 이제 `compilerOptions`의 다른 설정들을 보자.
+
+## module
+
+프로그램의 모듈 시스템을 설정한다. 보통의 노드 프로젝트의 경우 `CommonJS`로 설정해두는 것이 일반적이다.
+
+> Node.js에는 기존의 `CommonJS`와 새로 나온 ECMAScript Modules(이하 CJS, ESM) 이렇게 2개의 모듈 시스템이 있다. 일부 라이브러리에서 `ESM`을 지원하지 않는 경우가 있을 수 있어서 대부분의 상황에서는 `CJS`를 사용한다.
+
+## declaration
+
+프로젝트 내의 모든 Typescript 또는 Javascript에 대해 .d.ts 파일을 생성한다. .d.ts 파일은 Typescript 코드의 타입 추론을 돕는 파일이다.
+
+## removeComments
+
+활성화 시 Typescript에서 Javascript로 컴파일할 때 모든 주석을 제거한다.
+
+## emitDecoratorMetadata
+
+모듈 `Reflect-metadata`와 함께 작동하는 데코레이터에 대한 타입 메타데이터 방출에 대한 실험적 지원을 활성화한다. `experimentalDecorators` 옵션이 활성화되지 않으면 해당 옵션은 사용할 수 없다.
+
+## experimentalDecorators
+
+Typescript의 데코레이터에 대한 실험적 지원을 활성화한다.
+
+## allowSyntheticDefaultImports
+
+기존에 import는 이렇게 사용했지만
+
+```tsx
+import React from 'react'
+```
+
+해당 옵션을 활성화하면 아래와 같이 사용이 가능하다.
+
+```tsx
+import * as React from 'react'
+```
+
+## target
+
+Javascript version을 설정한다.
+
+## skipLibCheck
+
+node_modules에서 선언 파일의 타입 검사를 건너뛴다. 이를 통해 node_modules의 타입 검사를 생략함으로써 컴파일 시간을 단축시킬 수 있다. 직접 작성한 소스 코드에서 참조되는 코드만 타입 검사를 실시한다.
+
+## paths
+
+`import` 시 경로를 매핑할 수 있다.
+
+```tsx
+{
+  "compilerOptions": {
+    "baseUrl": "./", // 기준이 되는 경로 위치, 이는 컴파일 시 참고가 된다.
+    "paths": {
+      "@library/*": ["./library/*"] // baseUrl의 경로를 참조한다.
+    }
+  }
+}
+```
+
+## 결론
+
+`Typescript`를 사용할 때 이런 옵션들을 모르고 썼었던 것 같다. 위의 설정들을 잘 이용한다면 좀 더 안정적으로 Type safe하게 Typescript를 사용할 수 있을 것이다.
