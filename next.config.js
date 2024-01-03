@@ -67,7 +67,6 @@ module.exports = () => {
     },
     basePath: '/daphne-blog-v2',
     output: 'export',
-    unoptimized: true,
     images: {
       remotePatterns: [
         {
