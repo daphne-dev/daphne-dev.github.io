@@ -6,8 +6,8 @@ export function ReadPost(svgProps: SVGProps<SVGSVGElement>) {
       <path
         d="M7.91724 5.8299L15.6464 13.5545L8.19394 21.5091"
         stroke="black"
-        stroke-width="2"
-        stroke-linecap="round"
+        strokeWidth="2"
+        strokeLinecap="round"
       />
     </svg>
   )
