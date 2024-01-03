@@ -10,22 +10,18 @@ type PageIconProps = {
   size?: number
 }
 
-const PageIcon = ({ kind, href, size = 8 }: PageIconProps) => {
-  const PageSvg = components[kind]
+const PostViewButton = ({ kind, href, size = 8 }: PageIconProps) => {
+  const PostViewButtonSvg = components[kind]
 
   return (
-    <a
-      className="text-sm text-gray-500 transition hover:text-gray-600"
-      target="_blank"
-      rel="noopener noreferrer"
-      href={href}
-    >
-      <span className="sr-only">{kind}</span>
-      <PageSvg
-        className={`fill-current text-gray-400 hover:text-primary-500 dark:text-gray-200 dark:hover:text-primary-400 h-${size} w-${size}`}
-      />
-    </a>
+    <div className="absolute bottom-4 right-5 inline-flex">
+      <a className="mr-3" target="_blank" rel="noopener noreferrer" href={href}>
+        <PostViewButtonSvg
+          className={`fill-current text-gray-400 hover:text-primary-500 dark:text-gray-200 dark:hover:text-primary-400 h-${size} w-${size}`}
+        />
+      </a>
+    </div>
   )
 }
 
-export default PageIcon
+export default PostViewButton

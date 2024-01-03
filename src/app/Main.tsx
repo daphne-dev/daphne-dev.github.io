@@ -1,11 +1,9 @@
 import Link from '@components/Link'
 import Tag from '@components/Tag'
 import siteMetadata from '@data/siteMetadata'
-import { formatDate } from 'pliny/utils/formatDate'
 import NewsletterForm from 'pliny/ui/NewsletterForm'
 import dayjs from 'dayjs'
-// import { PageArrow } from '@/components/page-icons/icons'
-import PageIcon from '@components/page-icons'
+import PostViewButton from '@components/page-icons'
 
 const MAX_DISPLAY = 5
 
@@ -26,10 +24,10 @@ export default function Home({ posts }) {
           {posts.slice(0, MAX_DISPLAY).map((post) => {
             const { path, date, title, summary, tags } = post
             return (
-              <li key={path} className="py-12">
-                <article>
-                  <div className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
-                    <dl>
+              <li key={path} className="border-none pt-7">
+                <div className="relative m-0 flex w-full flex-wrap  rounded-3xl border border-neutral-300  px-7 py-4">
+                  <div className="w-5/6 ">
+                    <dl className="mb-2">
                       <dt className="sr-only">Published on</dt>
                       <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
                         <time dateTime={date}>{dayjs(date).format('YYYY-MM-DD')}</time>
@@ -56,18 +54,10 @@ export default function Home({ posts }) {
                           {summary}
                         </div>
                       </div>
-                      <div className="text-base font-medium leading-6">
-                        <Link
-                          href={`/posts/${path}`}
-                          className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-                          aria-label={`Read more: "${title}"`}
-                        >
-                          Read more &rarr;
-                        </Link>
-                      </div>
                     </div>
                   </div>
-                </article>
+                  <PostViewButton kind="readPost" href={`/posts/${path}`} />
+                </div>
               </li>
             )
           })}
@@ -93,5 +83,3 @@ export default function Home({ posts }) {
     </>
   )
 }
-
-// <PageIcon kind="readPost" href={`/posts/${path}`} />
