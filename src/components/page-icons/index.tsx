@@ -1,4 +1,5 @@
 import { ReadPost } from './icons'
+import Link from '@components/Link'
 
 const components = {
   readPost: ReadPost,
@@ -15,11 +16,11 @@ const PostViewButton = ({ kind, href, size = 8 }: PageIconProps) => {
 
   return (
     <div className="absolute bottom-4 right-5 inline-flex">
-      <a className="mr-3" target="_blank" rel="noopener noreferrer" href={href}>
+      <Link href={`${href}`} className="mr-3">
         <PostViewButtonSvg
           className={`fill-current text-gray-400 hover:text-primary-500 dark:text-gray-200 dark:hover:text-primary-400 h-${size} w-${size}`}
         />
-      </a>
+      </Link>
     </div>
   )
 }
