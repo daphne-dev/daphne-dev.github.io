@@ -9,7 +9,7 @@ const siteMetadata = {
   siteUrl: 'https://daphne-dev.github.io/',
   siteRepo: 'git@github.com:Daphne-dev/daphne-dev.github.io.git',
   siteLogo: '/static/images/logo.png',
-  socialBanner: '/static/images/twitter-card.png',
+  socialBanner: '/static/images/blog-card.png',
   mastodon: 'https://mastodon.social/@mastodonuser',
   email: 'daphne01215@gmail.com',
   github: 'https://github.com/daphne-dev',
