@@ -16,20 +16,20 @@ Type Checking 부분이다.
 ### allowUnreachableCode
 
 - undefined(기본 값) : 경고로 접근할 수 없는 코드가 있다고 제안 제공
-  ![](/static/images/tsconfig-001.png)
+  ![](/image/tsconfig-001.png)
 - true : 접근할 수 없는 코드에 대해 무시(알려주지 않음, 정상 컴파일)
-  ![](/static/images/tsconfig-002.png)
+  ![](/image/tsconfig-002.png)
 - false : 접근할 수 없는 코드에 대해 컴파일러 오류 발생
-  ![](/static/images/tsconfig-003.png)
+  ![](/image/tsconfig-003.png)
 
 ### allowUnusedLabels
 
 - undefined(기본 값) : 사용되지 않는 레이블이라고 제안 제공
-  ![](/static/images/tsconfig-004.png)
+  ![](/image/tsconfig-004.png)
 - true : 사용되지 않는 레이블에 대해 무시
-  ![](/static/images/tsconfig-005.png)
+  ![](/image/tsconfig-005.png)
 - false : 사용되지 않는 레이블에 대해 컴파일 오류 발생
-  ![](/static/images/tsconfig-006.png)
+  ![](/image/tsconfig-006.png)
 
 ### alwaysStrict
 
@@ -53,11 +53,11 @@ interface Color {
 const color: Color = undefined
 ```
 
-![](/static/images/tsconfig-007.png)
+![](/image/tsconfig-007.png)
 
 ### noFallthroughCasesInSwitch
 
-![](/static/images/tsconfig-008.png)
+![](/image/tsconfig-008.png)
 
 - true : switch 문의 `fall through` 케이스에 대한 오류를 안내한다.
 - false(기본 값) : switch 문의 `fall through` 케이스에 대한 오류를 무시한다.
@@ -72,7 +72,7 @@ function fn(n) {
 fn(2)
 ```
 
-![](/static/images/tsconfig-009.png)
+![](/image/tsconfig-009.png)
 
 - true : 타입 유형을 추론할 수 없는 `any 유형`에 대해 컴파일 오류를 발생시킨다.
 - false(기본 값) : 타입 유형을 추론할 수 없는 `any 유형`에 대해 안내 하지만 컴파일 시 무시한다.
@@ -95,7 +95,7 @@ class SomeCoffee extends Coffee {
 }
 ```
 
-![](/static/images/tsconfig-010.png)
+![](/image/tsconfig-010.png)
 
 - true : `override 한정자`를 포함해야 한다고 안내
 - false(기본 값) : `override 한정자`를 포함하는 안내 무시
@@ -113,7 +113,7 @@ function hello(s: string) {
 }
 ```
 
-![](/static/images/tsconfig-011.png)
+![](/image/tsconfig-011.png)
 
 - true : 일부 코드 경로가 값을 반환하지 않을 경우 안내
 - false(기본 값) : 일부 코드 경로가 값을 반환하지 않아도 안내하지 않음
@@ -133,7 +133,7 @@ function hello(s: string) {
 }
 ```
 
-![](/static/images/tsconfig-012.png)
+![](/image/tsconfig-012.png)
 
 - true : 암시적으로 `any 유형` 이 포함되는 경우 안내
 - false(기본 값) : 암시적으로 `any 유형`이 포함되어도 무시
@@ -166,7 +166,7 @@ function getSomeObject(): SomeObject {
 }
 ```
 
-![](/static/images/tsconfig-013.png)
+![](/image/tsconfig-013.png)
 
 - true : 인덱스 시그니처로 정의된 객체에서 obj.key 구문을 사용하여 정의되지 않은 필드에 액세스 할 수 없고 반드시 `obj['key']` 구문을 사용하도록 한다.
 - false(기본 값) : 인덱스 시그니처로 정의된 객체에서 obj.key 구문을 사용하여 정의되지 않은 필드에 액세스가 가능하다.
@@ -190,7 +190,7 @@ const b = obj.b
 const c = obj.c
 ```
 
-![](/static/images/tsconfig-014.png)
+![](/image/tsconfig-014.png)
 
 - true(기본 값) : 인덱스 시그니처로 타입은 정의되었지만 객체에 정의되지 않은 key에 대해 `undefined` 타입을 추가한다.
 - false : 인덱스 시그니처로 타입은 정의되었지만 객체에 정의되지 않은 key에 대해서 `undefined` 타입을 추가하지 않는다.
@@ -208,7 +208,7 @@ function hello(s: string) {
 }
 ```
 
-![](/static/images/tsconfig-015.png)
+![](/image/tsconfig-015.png)
 
 - true : 컴파일 시 사용하지 않는 지역 변수에 대해 오류를 안내한다.
 - false : 컴파일 시 사용하지 않는 지역 변수에 대해 오류를 무시한다.
@@ -221,7 +221,7 @@ function hello(s: string) {
 }
 ```
 
-![](/static/images/tsconfig-016.png)
+![](/image/tsconfig-016.png)
 
 - true : 컴파일 시 사용하지 않는 매개 변수에 대해 오류를 안내한다.
 - false : 컴파일 시 사용하지 않는 매개 변수에 대해 오류를 무시한다.
@@ -252,7 +252,7 @@ const hello1 = hello.call(undefined, 'aaa')
 const hello2 = hello.call(undefined, false)
 ```
 
-![](/static/images/tsconfig-017.png)
+![](/image/tsconfig-017.png)
 
 - true
 - false(기본 값)
@@ -273,7 +273,7 @@ type HelloFunc = (s: string | number) => string
 hello1(10)
 ```
 
-![](/static/images/tsconfig-018.png)
+![](/image/tsconfig-018.png)
 
 - true
 - false(기본 값)
@@ -304,7 +304,7 @@ function hello(s: string) {
 }
 ```
 
-![](/static/images/tsconfig-019.png)
+![](/image/tsconfig-019.png)
 
 - true
 - false(기본 값)
@@ -324,7 +324,7 @@ class Coffee {
 }
 ```
 
-![](/static/images/tsconfig-020.png)
+![](/image/tsconfig-020.png)
 
 - true
 - false(기본 값)
@@ -334,9 +334,9 @@ class Coffee {
 활성화 시 `catch절`의 매개변수 타입을 `any`에서 `unknown`으로 변경한다.
 
 - true
-  ![](/static/images/tsconfig-021.png)
+  ![](/image/tsconfig-021.png)
 - false(기본 값)
-  ![](/static/images/tsconfig-022.png)
+  ![](/image/tsconfig-022.png)
 
 여기까지 컴파일 시 `Type checking`에 대한 설정들이었다. 이제 `compilerOptions`의 다른 설정들을 보자.
 
