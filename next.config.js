@@ -65,23 +65,15 @@ module.exports = () => {
     eslint: {
       dirs: ['app', 'components', 'layouts', 'scripts'],
     },
-    basePath: '/daphne-blog-v2',
     output: 'export',
     images: {
-      remotePatterns: [
-        {
-          protocol: 'https',
-          hostname: 'picsum.photos',
-        },
-      ],
-    },
-    async headers() {
-      return [
-        {
-          source: '/(.*)',
-          headers: securityHeaders,
-        },
-      ]
+      unoptimized: true,
+      // remotePatterns: [
+      //   {
+      //     protocol: 'https',
+      //     hostname: 'picsum.photos',
+      //   },
+      // ],
     },
     webpack: (config, options) => {
       config.module.rules.push({
