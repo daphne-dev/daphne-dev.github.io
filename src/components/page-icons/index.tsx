@@ -18,7 +18,7 @@ const PostViewButton = ({ kind, href, size = 8 }: PageIconProps) => {
     <div className="absolute bottom-4 right-5 inline-flex">
       <Link href={`${href}`} className="mr-3">
         <PostViewButtonSvg
-          className={`fill-current text-gray-400 hover:text-primary-500 dark:text-gray-200 dark:hover:text-primary-400 h-${size} w-${size}`}
+          className={`stroke-current text-gray-400 hover:text-primary-500 dark:text-gray-200 dark:hover:text-primary-400 h-${size} w-${size}`}
         />
       </Link>
     </div>
