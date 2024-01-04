@@ -1,0 +1,319 @@
+---
+title: 'CircleCI로 S3 배포 자동화하기'
+tags: ['CircleCI']
+date: 2022-02-16 17:31:33
+summary: 'CircleCI로 배포 자동화를 해보자'
+---
+
+## CircleCI란?
+
+> CircleCI에서 CI는 지속적인 통합(continuous integration)의 약자인데, CI를 통해 우리는 생산성, 효율성, 신뢰성을가진 코드를 가질 수 있다. CircleCI는 이를 자동화해주는 도구로 test, build,deploy를 자동화할 수 있게 해준다.
+
+## CircleCI 장점
+
+- 모든 작업에 SSH 연결을 통해 빌드 문제를 디버깅 할 수 있다.
+- `.circleci/config.yml` 파일을 사용해서 작업을 병렬로 처리할 수 있다.
+- 두 개의 간단한 키로 캐싱을 구성하여 워크플로에서 이전 작업의 데이터를 재사용 할 수 있다.
+- 고유한 플랫폼 지원을 위해 자체 호스팅 러너를 구성할 수 있다.
+- 재사용 가능한 구성 패키지인 `orbs`를 사용하여, 타사 도구와 쉽게 통합이 가능하며 반복되는 프로세스를 자동화 할 수 있다.
+- 다양한 언어로 사전 빌드된 Docker 이미지 사용
+- 자체 `test insight`를 통해 테스트 성능 분석 및 최적화 가능
+- CircleCI를 이용한 모든 작업에 대한 모니터링 제공
+
+## CircleCI 시작
+
+![](/image/circleci-002.png)
+
+Github, Bitbucket 등으로 로그인하여 자신의 프로젝트들의 CI/CD를 쉽고 빠르게 빌딩할 수 있다.
+여기서는 Github으로 연결했다.
+
+## CircleCI 구성하기
+
+![](/image/circleci-003.png)
+
+`Projects`에 들어가면 연결한 Github에 있는 레포지토리들이 보이게 된다.
+
+![](/image/circleci-004.png)
+
+`Set Up Project`버튼을 누르면 CircleCI 설정 파일인 `.circleci/config.yml` 파일을 설정할 수 있다.
+2가지 방법을 제안하는데, 스타터를 이용해 직접 위 파일을 작성하는 방법과 미리 설정된 파일을 사용하는 방법이다.
+
+## S3에 배포 자동화 하기
+
+### 기본 구성
+
+1. version & orbs
+
+```yaml
+version: 2.1
+  orbs:
+    aws-cli: circleci/aws-cli@2.0.6
+    aws-s3: circleci/aws-s3@3.0
+```
+
+- version: CircleCI의 버전 설정
+- orbs: 미리 구성된 패키지를 가져올 때 사용. 여기서는 awc-cli 와 aws-s3 패키지를 가져와서 간편한 설정이 가능하도록함.
+
+2. jobs
+
+```yaml
+jobs:
+  build:
+  ...
+  depoly-S3:
+  ...
+```
+
+- jobs: 작업 목록을 의미
+
+3. workflows
+
+```yaml
+workflows:
+  build_and_deploy:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /v(\\d+)\\.[0-9]\\.[0-9]$/ # 버전 정규식 v1.0.0의 형태
+            branches:
+              ignore: /.*/ # 모든 브랜치에 대해 트리거에서 제외한다.
+      - depoly-S3:
+          requires:
+            - build # 위의 build job의 작업이 끝나면 실행되도록 설정
+          filters:
+            tags:
+              only: /v(\\d+)\\.[0-9]\\.[0-9]$/
+            branches:
+              ignore: /.\*/
+```
+
+- workflows: 작업의 실행 순서 및 트리거 등을 설정한다.
+- filters: 작업을 실행하기 위한 트리거를 설정한다.
+
+  - tags
+    - only: 트리거로 사용할 태깅을 등록 한다. 정규식을 사용할 수 있다.
+  - branches
+    - ignore: 트리거에서 제외할 브랜치를 설정한다.
+
+- requires: 설정한 작업이 완료되면 실행되도록 설정한다.
+
+### 프로젝트 빌드
+
+1. 작업 경로 설정 및 node.js 도커 이미지 불러오기
+
+```yaml
+jobs:
+  build:
+  working_directory: ~/repo
+  docker:
+    - image: cimg/node:14.18
+  steps:
+  ...
+```
+
+- working_directory: 작업을 실행할 디렉토리 경로
+- docker: 작업 내부에서 사용할 도커 설정, 여기서는 빌드 시 yarn을 사용하므로 CircleCI가 node.js를 사용할 수 있도록 node.js 도커 이미지를 불러온다.
+- steps: 작업 수행 단계를 의미한다.
+
+2. checkout
+
+```yaml
+steps:
+  - checkout
+```
+
+- checkout: CircleCI의 CLI가 실행될 디렉토리를 코드가 있는 위치로 변경한다.
+
+3. restore_cache
+
+```yaml
+- restore_cache:
+    keys:
+      - v1-dependencies-{{ checksum "yarn.lock" }}
+      - v1-dependencies-
+```
+
+- restore_cache: 캐시 복구 기능, checksum 의 yarn.lock을 해싱한 값을 key로 삼아서 캐시를 저장하고 불러올 수 있다. 이전에 yarn을 통해 설치했던 node_modules 패키지들을 매번 설치하지 않고 불러오는게 가능하다.
+
+4. yarn install
+
+```yaml
+- run:
+    name: install dependencies
+    command: yarn install
+```
+
+- yarn install을 통해 dependency 설치
+
+5. save_cache
+
+```yaml
+- save_cache:
+  key: v1-dependencies-{{ checksum "yarn.lock" }}
+  paths: - node_modules
+```
+
+- save_cache: 캐시의 key를 지정하고 어떤 파일을 캐시할 것인지 경로를 설정
+
+6. yarn build
+
+```yaml
+- run:
+  name: build
+  command: yarn build:production
+```
+
+- 프로젝트를 빌드한다.
+
+7. 빌드한 현재 작업 디렉토리를 저장하기
+
+```yaml
+- persist_to_workspace: # 빌드한 현재 작업 디렉토리 저장
+    root: .
+    paths:
+      - .
+```
+
+- persist_to_workspace: 현재 작업 디렉토리를 저장할 수 있다. 이를 통해 다른 작업에서 빌드했던 결과물을 가져올 수 있게 된다.
+
+### S3에 배포하기
+
+1. executor 설정
+
+```yaml
+depoly-S3:
+executor: aws-cli/default
+```
+
+- executor: 실행할 CLI 환경을 불러온다. 여기에서는 AWS CLI를 사용하기 위해 aws-cli/default를 불러왔다.
+
+2. 빌드했던 디렉토리 가져오기
+
+```yaml
+steps:
+  - attach_workspace: # 빌드를 수행한 디렉토리를 가져오기
+    at: .
+```
+
+- attach_workspace: 이전에 저장했던 디렉토리를 가져온다. at 에 경로를 지정하여 가져올 수 있다.
+
+3.  aws-s3/sync
+
+```yaml
+- aws-s3/sync:
+  arguments: |
+  --delete \\
+  --cache-control "max-age=86400"
+  aws-access-key-id: AWS_ACCESS_KEY_ID
+  aws-region: AWS_REGION
+  aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+  from: "dist"
+  to: "s3://allcobootcamp.com"
+```
+
+- aws-s3/sync : S3 버킷 안의 디렉토리와 현재 작업 위치의 디렉토리 구조를 맞추는 작업, 없는 디렉토리가 있다면 생성한다.
+  - arguments: S3 sync 명령어 세부 설정 (설정 정보 참고)
+    - delete: 현재 디렉토리에는 없지만 S3 디렉토리에는 있는 파일은 동기화 중 삭제처리
+    - cache-control: 브라우저의 캐시 정책을 설정한다. max-age=N N초의 동안 캐싱하여 설정된 시간 동안에는 서버에 있는 데이터를 가져오지 않고 로컬에 있는 데이터를 사용한다.
+  - from: 빌드한 현재 소스의 위치
+  - to: 업데이트하려는 S3 버킷의 위치
+- aws-s3 CLI를 사용하려면 해당되는 S3의 정보를 설정해야한다. S3에 접근하기 위해서는 aws-access-key-id, aws-region, aws-secret-access-key가 필요하다. 이는 민감한 정보이기 때문에 별도의 환경 변수로 설정하여 관리하는게 보안상 좋다. 환경 변수를 설정하려면 다음과 같이 하면 된다.
+
+![](/image/circle-005.png)
+
+환경 변수를 설정할 프로젝트의 `Project Settings`에 들어간다.
+
+![](/image/circle-006.png)
+
+Environment Variables에서 Add Environment Variable 버튼을 누르면 환경 변수를 추가할 수 있다.
+
+![](/image/circle-007.png)
+
+환경 변수를 추가한다.
+
+4.  aws-s3/copy
+
+```yaml
+- aws-s3/copy:
+  arguments: '--dryrun'
+  from: 'dist'
+  to: 's3://allcobootcamp.com'
+```
+
+- aws-s3/copy: S3 버킷에 현재 소스를 업데이트한다.
+  - arguments: S3 copy 명령어 세부 설정 (설정 정보 참고)
+    - dryrun: 실제로 실행하지 않고 지정된 명령을 사용하여 수행할 작업을 표시합니다.
+  - from: 빌드한 현재 소스의 위치
+  - to: 업데이트하려는 S3 버킷의 위치
+
+## 전체 설정 정보
+
+```yaml
+version: 2.1
+orbs:
+  aws-cli: circleci/aws-cli@2.0.6
+  aws-s3: circleci/aws-s3@3.0
+jobs:
+  build:
+    working_directory: ~/repo
+    docker:
+      - image: cimg/node:14.18
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "yarn.lock" }}
+            - v1-dependencies-
+      - run:
+          name: install dependencies
+          command: yarn install
+      - save_cache:
+          key: v1-dependencies-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
+      - run:
+          name: build
+          command: yarn build:production
+      - persist_to_workspace: # 빌드한 현재 작업 디렉토리 저장
+          root: .
+          paths:
+            - .
+
+  depoly-S3:
+    executor: aws-cli/default
+    steps:
+      - attach_workspace: # 빌드를 수행한 디렉토리를 가져온다.
+          at: .
+      - aws-s3/sync:
+          arguments: |
+            --delete \
+            --cache-control "max-age=86400"
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_REGION
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          from: 'dist'
+          to: 's3://allcobootcamp.com'
+      - aws-s3/copy:
+          arguments: '--dryrun'
+          from: 'dist'
+          to: 's3://allcobootcamp.com'
+
+workflows:
+  build_and_deploy:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /v(\d+)\.[0-9]\.[0-9]$/ # 버전 정규식 v1.0.0의 형태
+            branches:
+              ignore: /.*/
+      - depoly-S3:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /v(\d+)\.[0-9]\.[0-9]$/
+            branches:
+              ignore: /.*/
+```
