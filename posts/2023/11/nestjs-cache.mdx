@@ -1,0 +1,178 @@
+---
+title: 'Redis와 캐싱'
+tags: ['Redis', 'Cache', 'NestJS']
+date: 2023-11-09 12:30:11
+summary: 'NestJS에서 Redis로 Database 캐싱하기'
+---
+
+## Redis란?
+
+> In-memory Data Structure Store
+
+캐싱 및 세션 스토리지, 채팅 및 메시징, 속도 제한, 대기열 등으로 사용 가능한 오픈 소스 인메모리 데이터 저장소
+
+## Redis의 특징
+
+- 다양한 데이터 구조 지원 : String, Lists, Sets, Sorted Set, Hash 등과 같은 다양한 **Collection** 지원
+- 빠른 속도 : 메모리에 저장하기 때문에 빠른 속도를 보장 (일반적으로 작업을 실행하는데 1ms 미만이 소요됩니다.)
+- 데이터 지속성 : **Persistance**를 지원해 데이터 영속성을 보장
+- Single Thread 지원 : **Single Thread**로 동작하기 때문에 **Race Condition**에 빠지는 것을 방지해서 정합성을 보장
+
+## Cache를 사용하는 이유
+
+> 자주 사용하는 데이터나 값을 미리 복사해놓는 임시 장소
+
+요청에 따라 미리 나올 결과를 저장하고 그 요청이 오면 **DB나 API를 참조하지 않고 Cache에 접근해서 요청을 처리**하게 합니다.
+
+Cache는 DB보다 빠르기 때문에 DB에 요청하는 것보다 훨씬 빠르게 요청을 처리할 수 있게 됩니다.
+
+이러한 Cache를 사용하는 이유에는 파레토 법칙을 들 수 있습니다.
+
+파레토의 법칙이란 **전체 결과의 80%가 전체 원인의 20%의 발생하는 현상**을 의미합니다.
+
+![](/image/nestjs-cache-001.jpeg)
+
+즉, 현실에서 발생하는 요청은 대부분 자주 발생하는 요청이 많기 때문에 자주 발생하는 요청만 캐싱해도 큰 효과를 거둘 수 있습니다.
+
+## Caching 전략에 대해
+
+### 1. Cache Aside Pattern(Lazy Loading)
+
+![](/image/nestjs-cache/cache-aside-pattern.png)
+
+데이터가 필요할 때만 캐시에 로드합니다.
+
+애플리케이션은 먼저 캐시를 확인하고, 데이터가 없으면 데이터베이스에서 데이터를 가져와 캐시에 저장합니다.
+
+쓰기 작업은 캐시에 영향을 주지 않으며, 데이터는 다음 읽기 요청 때 캐시에 저장됩니다.
+
+### 2. Write Through Pattern
+
+![](/image/nestjs-cache/write-through-pattern.png)
+데이터를 캐시와 데이터베이스에 동시에 씁니다.
+
+이 방식은 데이터 일관성을 보장하지만, 쓰기 작업의 지연 시간이 길어질 수 있습니다.
+
+캐시 누락의 위험이 줄어들지만, 캐시에 저장되는 모든 데이터가 항상 필요한 것은 아닙니다.
+
+### 3. Write Behind(Write Back) Pattern
+
+![](/image/nestjs-cache/write-behind-pattern.png)
+데이터를 먼저 캐시에 쓰고, 나중에 비동기적으로 데이터베이스에 씁니다.
+
+쓰기 작업의 지연 시간을 줄이고, 데이터베이스에 부하를 감소시키는 데 유용합니다.
+
+그러나 데이터 손실의 위험이 있으므로 적절한 데이터 지속성 전략이 필요합니다.
+
+## NestJS에서 캐싱 사용하기
+
+`Cache Aside Pattern`을 `NestJS`에서 `Redis`를 이용해 캐싱을 구현해보겠습니다.
+
+### Redis Cache Module
+
+Redis를 사용하기 위해 아래 패키지를 설치해줍니다.
+
+```bash
+pnpm add @nestjs-modules/ioredis ioredis`
+
+```
+
+`RedisCacheModule`을 아래와 같이 설정합니다.
+`configService`를 통해 환경변수를 가져오도록 합니다.
+
+```typescript
+import { Module } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { RedisCacheService } from 'src/lib/redis-cache/redis-cache.service'
+import { RedisModule } from '@nestjs-modules/ioredis'
+
+@Module({
+  imports: [
+    RedisModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const host = configService.getOrThrow<string>('REDIS_CACHE_HOST')
+        const port = configService.getOrThrow<number>('REDIS_CACHE_PORT')
+        const url = `redis://${host}:${port}`
+        return {
+          type: 'single',
+          url,
+          password: configService.getOrThrow<string>('REDIS_CACHE_PASSWORD'),
+        }
+      },
+    }),
+  ],
+  providers: [RedisCacheService],
+  exports: [RedisCacheService],
+})
+export class RedisCacheModule {}
+```
+
+### Redis Cache Module을 다른 Module에 주입하기
+
+`RedisCacheModule`을 테스트를 하기 위한 `PostModule`에 주입해줍니다.
+
+```typescript
+import { Module } from '@nestjs/common'
+import { PrismaModule } from 'src/lib/prisma/prisma.module'
+import { RedisCacheModule } from 'src/lib/redis-cache/redis-cache.module'
+import { PostController } from 'src/post/post.controller'
+import { PostService } from 'src/post/post.service'
+
+@Module({
+  imports: [RedisCacheModule, PrismaModule],
+  providers: [PostService],
+  controllers: [PostController],
+})
+export class PostModule {}
+```
+
+### PostService에 캐시 서비스 적용하기
+
+```typescript
+...
+async getPost(id: number) {
+    const cacheKey = `post_${id}`;
+
+    // 캐시된 게시글 조회
+    const cachedPost = await this.cache.get(cacheKey);
+
+    // 캐시가 되지 않았을 경우
+    if (!cachedPost) {
+      // DB에 게시글 조회
+      const post = await this.prismaService.post.findUnique({
+        where: { id },
+      });
+
+      // 게시글이 존재하지 않을 경우
+      if (!post) {
+        throw new NotFoundException('게시글이 존재하지 않습니다.');
+      }
+
+      // 게시글 캐싱
+      await this.cache.set({ key: cacheKey, value: post, ttl: 60 });
+
+      // 게시글 리턴
+      return post;
+    }
+
+    // 캐시된 게시글 리턴
+    return cachedPost;
+  }
+...
+```
+
+## Redis 캐시 적용 결과
+
+![](/image/nestjs-cache/cache-result.png)
+
+데이터베이스에서 가져오는 첫번째 요청보다 더 빠르게 가져오는 것을 볼 수 있습니다.
+
+## 결론
+
+지금까지 Redis의 캐싱 전략을 통해 성능을 향상시키는 방법을 살펴보았습니다.
+또한 NestJS에서 실제로 Redis 캐싱을 구현해 데이터베이스의 부하를 줄이는 것을 확인해보았습니다.  
+캐싱 전략에는 여러가지 전략이 있고 상황에 따라 올바른 캐싱 전략을 사용하는 것이 중요합니다.
+캐싱은 성능을 크게 향상시키지만, 데이터 일관성 및 캐시 무효화에 대한 관리가 필요합니다. 이 부분만 주의한다면 캐싱을 사용하는 것은 서비스의 속도와 효율성을 높일 뿐만 아니라 견고하고 안정적인 성능을 보장할 좋은 선택이라 생각합니다.
+
+이 글에서 적용해본 예제 코드는 [Redis 캐시 예제 코드](https://github.com/Daphne-dev/nestjs-sample/tree/main/05-redis-cache)에서 확인할 수 있습니다.
