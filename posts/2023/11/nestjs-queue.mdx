@@ -1,0 +1,238 @@
+---
+title: 'Redis와 Message Queue'
+tags: ['Redis', 'Queue', 'NestJS', 'Message Queue']
+date: 2023-11-15 13:42:45
+summary: 'NestJS에서 Redis로 메시지 큐 구현하기'
+---
+
+## 메시지 큐(Message Queue)란?
+
+`메시지 큐(Message Queue)`는 컴포넌트 간에 비동기적으로 통신할 수 있게 해주는 다리 역할을 합니다. `생산자(Producer)`는 메시지를 큐에 보내고, `소비자(Consumer)`는 이러한 메시지들을 처리합니다. 메시지 큐는 시스템의 컴포넌트를 분리하여 애플리케이션의 코딩을 간소화 하면서 성능, 안정성 및 확장성 그리고 신뢰성까지 개선할 수 있습니다.
+
+그림을 보면 구조에 대해 쉽게 이해할 수 있는데, 메시지 큐는 임시로 메시지를 저장하는 간단한 버퍼 정도로 생각하면 됩니다. 메시지를 송신 & 수신하기 위해 중간에 메시지 큐를 두는게 포인트입니다.
+
+![](/image/redis-queue/message-queue.png)
+
+### 메시지 큐의 장점
+
+1. 비동기(Asynchronous)  
+   메시지 큐는 비동기 통신을 가능하게 하여 각 컴포넌트가 독립적으로 작동할 수 있게 합니다.
+
+2. 확장성(Scalable)과 유연성(Flexibility)  
+   메시지 큐는 시스템의 확장성과 유연성 향상시킬 수 있습니다. 생산자와 소비자로 서로를 신경쓰지 않아도 되기 때문입니다.
+
+3. 안정성(Stability)과 복원성(Resiliency)  
+   메시지 큐를 통해 메시지는 안전하게 저장되고 소비자가 다운되더라도 메시지는 메시지 큐에 남아있습니다. 이는 시스템 오류나 장애가 발생해도 메시지가 손실되지 않음을 보장합니다. 그리고 이러한 특성으로 소비자가 다시 시작될때마다 별도의 작업을 하지 않고도 메시지 처리를 재시작할 수 있습니다.
+
+이러한 메시지 큐를 활용할 수 있는 시스템을 메시지 브로커라고 합니다. 이런 브로커는 메시지 브로커와 이벤트 브로커로 나눌 수 있습니다.
+
+## 메시지 브로커(Message Broker)와 이벤트 브로커(Event Broker)
+
+### 메시지 브로커란?
+
+메시지 브로커는 `publisher`가 생산한 메시지를 메시지 큐에 저장하고, 저장된 데이터를 `consumer`가 가져갈 수 있도록 중개자 역할을 해주는 브로커라고 볼 수 있습니다. 메시지 브로커는 메시지를 검증, 저장, 라우팅하고 이를 적절한 대상에 전달할 수 있습니다. 또한 `consumer`가 메시지를 소비하면 메시지가 메시지 큐에 남지 않고 메시지가 삭제된다는 특징이 있습니다. 대표적으로 `RabbitMQ`가 이에 해당합니다.
+
+### 이벤트 브로커란?
+
+이벤트 브로커는 기본적으로 메시지 브로커의 큐 기능을 가지고 있습니다. 그래서 이벤트 브로커는 메시지 브로커의 역할을 할 수 있지만 반대로 메시지 브로커는 이벤트 브로커의 역할을 할 수 없습니다. 메시지 브로커와 다른 점은 이벤트 브로커는 `publisher`가 생산한 이벤트를 데이터베이스에 저장하듯 이벤트 스트림에 계속 저장하며 `consumer`가 이벤트를 가져간 후에도 이벤트 스트림에 계속 유지합니다. 이러한 특성으로 이벤트를 다시 재생시킬 수 있다는 차이점이 있습니다. 대표적으로 `Kafka`나 `Kinesis`가 이에 해당합니다.
+
+## 메시지 큐를 구현하는 방법
+
+메시지 큐를 구현하는데는 `Redis`나 `Kafka` 아니면 `RabbitMQ`를 사용해도 구현할 수 있습니다. 각각의 장단점이 있습니다.  
+`Redis`는 `인메모리 데이터 저장소` 특성상 속도가 빠르다는 장점과 다양한 데이터 구조를 지원해서 유연성에 장점이 있습니다. 대신 인메모리 특성상 메시지를 저장하지 않기 때문에 주의해야합니다.  
+`Kafka`는 대용량 데이터 처리, 실시간, 고성능, 고가용성에서 모두 좋고 메시지를 저장하기 때문에 추적하고 재처리하기 좋습니다. 단점으로는 Kafka를 관리하고 설정하는 것의 복잡함과 그에 따른 상당한 인프라와 리소스가 필요합니다.  
+`RabbitMQ`는 고급 메시징 기능과 라우팅 기능으로 복잡한 라우팅을 유연하고 안정적으로 처리할 수 있도록 해주고 관리 UI가 제공되어 관리가 쉽습니다. 하지만 부하가 매우 높을 경우 Kafka나 Redis만큼 성능이 좋지 않을 수 있습니다.
+
+이 글에서는 `Redis`를 이용해 구현해보겠습니다.
+
+## NestJS에서 Redis를 활용한 메시지 큐로 예약 서비스 구현하기
+
+NestJS에서 간단한 선착순 예약 서비스를 구현해보겠습니다.  
+NestJS에서는 Redis와 Bull을 활용해 쉽게 Queue를 구현할 수 있습니다.
+
+### Producer
+
+먼저 Producer부터 만들어 보겠습니다.
+
+NestJS에서 redis와 bull을 사용하기 위해 아래의 패키지를 설치해줍니다.
+
+```bash
+pnpm add @nestjs/bull bull
+```
+
+`RedisQueueModule`을 아래와 같이 작성합니다.
+
+```typescript
+@Module({
+  imports: [
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService): BullRootModuleOptions => {
+        return {
+          redis: {
+            host: configService.getOrThrow<string>('REDIS_QUEUE_HOST'),
+            port: configService.getOrThrow<number>('REDIS_QUEUE_PORT'),
+            password: configService.getOrThrow<string>('REDIS_QUEUE_PASSWORD'),
+          },
+        }
+      },
+    }),
+  ],
+})
+export class RedisQueueModule {}
+```
+
+`ReservationModule`을 작성합니다.
+
+```typescript
+@Module({
+  imports: [
+    RedisQueueModule,
+    BullModule.registerQueue({
+      name: 'reservation-queue',
+    }),
+    PrismaModule,
+    EventModule,
+  ],
+  providers: [ReservationService, ReservationRepository, ReservationConsumer],
+})
+export class ReservationModule {}
+```
+
+`ReservationService`를 작성합니다.
+`ReservationModule`에서 등록했던 큐 이름을 `InjectQueue`에 등록해줍니다. 그러면 `ReservationService`에서 사용할 수 있게 됩니다.
+
+```typescript
+@Injectable()
+export class ReservationService {
+  constructor(@InjectQueue('reservation-queue') private reservationQueue: Queue) {}
+
+  /** 예약 요청 */
+  async reserveEvent(eventId: number, userId: number) {
+    try {
+      // 예약 요청을 큐에 적재
+      await this.reservationQueue.add(
+        'reserveEvent',
+        {
+          userId,
+          eventId,
+        },
+        {
+          removeOnComplete: true, // 성공 시 큐에서 제거
+          removeOnFail: true, // 실패시 큐에서 제거
+        }
+      )
+    } catch (error) {
+      throw new BadRequestException()
+    }
+  }
+}
+```
+
+이제 Producer를 실행해서 결과를 보면 정상적으로 Queue에 적재되었다면 아래와 같은 결과가 나옵니다.
+
+![](/image/redis-queue/redis-queue-job.png)
+
+이제 Consumer도 만들어보겠습니다.
+
+### Consumer
+
+Consumer도 동일하게 패키지를 설치해줍니다.
+
+```bash
+pnpm add @nestjs/bull bull
+```
+
+`RedisQueueModule`은 동일합니다.
+
+```typescript
+@Module({
+  imports: [
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService): BullRootModuleOptions => {
+        return {
+          redis: {
+            host: configService.getOrThrow<string>('REDIS_QUEUE_HOST'),
+            port: configService.getOrThrow<number>('REDIS_QUEUE_PORT'),
+            password: configService.getOrThrow<string>('REDIS_QUEUE_PASSWORD'),
+          },
+        }
+      },
+    }),
+  ],
+})
+export class RedisQueueModule {}
+```
+
+`ReservationModule`도 마찬가지로 아래와 같이 작성해줍니다.
+
+```typescript
+@Module({
+  imports: [
+    RedisQueueModule,
+    BullModule.registerQueue({
+      name: 'reservation-queue',
+    }),
+    PrismaModule,
+    EventModule,
+  ],
+  providers: [ReservationService, ReservationRepository, ReservationConsumer],
+})
+export class ReservationModule {}
+```
+
+작업을 처리하는 클래스를 만듭니다.  
+`ReservationConsumer`를 아래와 같이 생성합니다.
+
+```typescript
+@Processor('reservation-queue')
+export class ReservationConsumer {
+  constructor(private readonly reservationService: ReservationService) {}
+
+  private readonly logger = new Logger(ReservationConsumer.name)
+
+  @Process('reserveEvent')
+  async processReservation(job: Job<any>) {
+    const { userId, eventId } = job.data
+
+    try {
+      this.logger.log(`${job.id} 작업을 수신했습니다.`) // 작업 수신을 잘했는지 확인하기 위한 로그
+
+      await this.reservationService.reserveTicket(eventId, userId)
+    } catch (error) {
+      this.logger.error(`Error processing reservation: ${error.message}`)
+      // 필요시 추가적인 에러 처리 로직 구현
+    }
+  }
+}
+```
+
+Processor 데코레이터를 통해 수신할 큐를 등록합니다. Process 데코레이터를 통해 수신할 작업명을 지정합니다.
+
+이제 Consumer를 실행 후 Producer로 메시지를 보내면 Consumer에서 해당 메시지를 받아 작업을 처리하는 것을 볼 수 있습니다.
+
+## 결론
+
+지금까지 메시지 큐에 대해 알아보았습니다. 또한 NestJS에서 Redis를 이용해 실제로 메시지 브로커 구현까지 진행해보았습니다.  
+메시지 큐를 사용하면 시스템의 성능, 안정성 및 확장성을 얻을 수 있습니다. 가볍고 빠른 메시지 브로커가 필요한 경우 `Redis`를 복잡한 라우팅과 안정성 그리고 다양한 메시징 패턴을 지원하는 메시지 브로커가 필요한 경우 `RabbitMQ`를 마지막으로 대용량 데이터 처리, 이벤트 스트림 실시간 처리가 필요한 경우 `Kafka`를 선택하는 것이 좋을 것이다.  
+당연히 모든 상황에서 무조건 메시지 큐를 사용해야 된다는 것은 아니지만 상황에 맞게 적절히 사용한다면 매우 강력한 무기가 될 것이라 생각합니다.
+
+이 글에서 적용해본 예제 코드는 [Redis Queue 예제 코드](https://github.com/Daphne-dev/nestjs-sample/tree/main/06-redis-queue)에서 확인할 수 있습니다.
+
+## 참고 자료
+
+메시지 대기열이란 무엇인가요?  
+https://aws.amazon.com/ko/message-queue/
+
+Kafka와 Redis의 차이점은 무엇일까요?  
+https://aws.amazon.com/ko/compare/the-difference-between-kafka-and-redis
+
+RabbitMQ와 Redis의 차이점은 무엇일까요?  
+https://aws.amazon.com/ko/compare/the-difference-between-rabbitmq-and-redis/
+
+카프카, 레빗엠큐, 레디스 큐의 큰 차이점! 이벤트 브로커와 메시지 브로커에 대해 알아봅시다.  
+https://www.youtube.com/watch?v=H_DaPyUOeTo
+
+NestJS Queues  
+https://docs.nestjs.com/techniques/queues
