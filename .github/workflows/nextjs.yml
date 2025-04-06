@@ -60,25 +60,6 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build project assets
         run: ${{ steps.detect-package-manager.outputs.manager }} build
-
-      # 빌드 후 상태 확인
-      - name: Check post-build state
-        run: |
-          echo "Out directory contents:"
-          ls -la out/
-          echo "Checking for feed.xml:"
-          find . -name feed.xml
-          echo "Public directory contents:"
-          ls -la public/
-
-      # out 디렉토리 내용물 확인
-      - name: Check artifact contents before upload
-        run: |
-          echo "Files to be uploaded:"
-          ls -la out/
-          echo "feed.xml content (if exists):"
-          cat out/feed.xml || echo "feed.xml not found"
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
