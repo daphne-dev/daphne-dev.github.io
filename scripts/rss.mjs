@@ -41,6 +41,7 @@ async function generateRSS(config, allBlogs, page = 'feed.xml') {
   if (publishPosts.length > 0) {
     const rss = generateRss(config, sortPosts(publishPosts))
     writeFileSync(`./public/${page}`, rss)
+    writeFileSync(`./out/${page}`, rss)
   }
 
   if (publishPosts.length > 0) {
@@ -50,8 +51,11 @@ async function generateRSS(config, allBlogs, page = 'feed.xml') {
       )
       const rss = generateRss(config, filteredPosts, `tags/${tag}/${page}`)
       const rssPath = path.join('public', 'tags', tag)
+      const outRssPath = path.join('out', 'tags', tag)
       mkdirSync(rssPath, { recursive: true })
+      mkdirSync(outRssPath, { recursive: true })
       writeFileSync(path.join(rssPath, page), rss)
+      writeFileSync(path.join(outRssPath, page), rss)
     }
   }
 }
