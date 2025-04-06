@@ -6,7 +6,7 @@ const siteMetadata = {
   description: 'Daphne의 개발 블로그입니다',
   language: 'ko',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://daphne-dev.github.io/',
+  siteUrl: 'https://daphne-dev.github.io',
   siteRepo: 'git@github.com:Daphne-dev/daphne-dev.github.io.git',
   siteLogo: '/static/images/logo.png',
   socialBanner: '/static/images/blog-card.png',
