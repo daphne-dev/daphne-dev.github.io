@@ -6,13 +6,13 @@ const siteMetadata = {
   description: 'Daphne의 개발 블로그입니다',
   language: 'ko',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://daphne.github.io',
-  siteRepo: 'git@github.com:Daphne-dev/daphne.github.io.git',
+  siteUrl: 'https://dev-daphne.github.io',
+  siteRepo: 'git@github.com:dev-daphne/dev-daphne.github.io.git',
   siteLogo: '/static/images/logo.png',
   socialBanner: '/static/images/blog-card.png',
   mastodon: 'https://mastodon.social/@mastodonuser',
   email: 'daphne01215@gmail.com',
-  github: 'https://github.com/daphne-dev',
+  github: 'https://github.com/dev-daphne',
   // twitter: 'https://twitter.com/Twitter',
   // facebook: 'https://facebook.com',
   // youtube: 'https://youtube.com',
@@ -51,7 +51,7 @@ const siteMetadata = {
     giscusConfig: {
       // Visit the link below, and follow the steps in the 'configuration' section
       // https://giscus.app/
-      repo: 'Daphne-dev/daphne.github.io',
+      repo: 'dev-daphne/dev-daphne.github.io',
       repositoryId: 'R_kgDOLAbwOw',
       category: 'General',
       categoryId: 'DIC_kwDOLAbwO84CcLy2',
