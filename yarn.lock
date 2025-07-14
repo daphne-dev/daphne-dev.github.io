@@ -4768,9 +4768,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"daphne-dev-github-blog@workspace:.":
+"daphne-github-blog@workspace:.":
   version: 0.0.0-use.local
-  resolution: "daphne-dev-github-blog@workspace:."
+  resolution: "daphne-github-blog@workspace:."
   dependencies:
     "@next/bundle-analyzer": 14.0.3
     "@svgr/webpack": ^8.0.1
