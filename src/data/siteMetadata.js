@@ -2,7 +2,7 @@
 const siteMetadata = {
   title: `Daphne's blog`,
   author: 'Daphne',
-  headerTitle: 'daphne.log',
+  headerTitle: 'Daphne.log',
   description: 'Daphne의 개발 블로그입니다',
   language: 'ko',
   theme: 'system', // system, dark or light
